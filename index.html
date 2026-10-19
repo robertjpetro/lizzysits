@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lizzy Sits Babysitting • Elizabeth's Corkboard</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Fredoka, Caveat, Patrick Hand, Quicksand -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Fredoka:wght@400;500;600;700&family=Patrick+Hand&family=Quicksand:wght@500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Canvas Confetti for booking confirmation -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['"Fredoka"', 'sans-serif'],
+            hand: ['"Patrick Hand"', 'cursive'],
+            script: ['"Caveat"', 'cursive'],
+            quicksand: ['"Quicksand"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              coral: '#FF6B57',
+              coralDark: '#E8533D',
+              teal: '#20B2AA',
+              tealLight: '#E6FAF8',
+              yellow: '#FFD166',
+              softPink: '#FFE5EC',
+              mint: '#E2F8EE',
+              lavender: '#EFE7FF',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Realistic Corkboard Texture Pattern */
+    .cork-bg {
+      background-color: #c9935a;
+      background-image:
+        radial-gradient(rgba(0, 0, 0, 0.12) 15%, transparent 16%),
+        radial-gradient(rgba(255, 255, 255, 0.18) 15%, transparent 16%),
+        radial-gradient(rgba(88, 51, 23, 0.25) 15%, transparent 16%);
+      background-size: 60px 60px, 45px 45px, 30px 30px;
+      background-position: 0 0, 25px 25px, 12px 18px;
+    }
+
+    /* Wooden Border Effect */
+    .wood-frame {
+      border: 14px solid #7c4825;
+      outline: 5px solid #4a280f;
+      box-shadow: inset 0 0 25px rgba(0, 0, 0, 0.6), 0 20px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    @media (max-width: 640px) {
+      .wood-frame {
+        border-width: 8px;
+        outline-width: 3px;
+      }
+    }
+
+    /* 3D Pushpin styling */
+    .pushpin {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      box-shadow: 0 5px 8px rgba(0, 0, 0, 0.35), inset 0 -3px 5px rgba(0, 0, 0, 0.3), inset 0 3px 5px rgba(255, 255, 255, 0.7);
+      z-index: 20;
+    }
+
+    .pushpin::after {
+      content: '';
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 50%;
+      top: 4px;
+      left: 6px;
+    }
+
+    .pin-red {
+      background: radial-gradient(circle at 35% 35%, #ff5252, #b71c1c);
+    }
+
+    .pin-yellow {
+      background: radial-gradient(circle at 35% 35%, #ffeb3b, #f57f17);
+    }
+
+    .pin-blue {
+      background: radial-gradient(circle at 35% 35%, #42a5f5, #0d47a1);
+    }
+
+    .pin-green {
+      background: radial-gradient(circle at 35% 35%, #66bb6a, #1b5e20);
+    }
+
+    .pin-pink {
+      background: radial-gradient(circle at 35% 35%, #ff69b4, #c2185b);
+    }
+
+    /* Washi tape effect */
+    .washi-tape {
+      background: rgba(255, 235, 160, 0.75);
+      backdrop-filter: blur(2px);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      position: absolute;
+      height: 26px;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%) rotate(-1deg);
+      width: 110px;
+      border-left: 2px dashed rgba(0, 0, 0, 0.1);
+      border-right: 2px dashed rgba(0, 0, 0, 0.1);
+      z-index: 15;
+    }
+
+    .washi-tape-teal {
+      background: rgba(140, 230, 222, 0.7);
+    }
+
+    .washi-tape-coral {
+      background: rgba(255, 175, 163, 0.7);
+    }
+
+    /* Paper Shadows & Hover Tilts */
+    .pin-item {
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+    }
+
+    .pin-item:hover {
+      transform: scale(1.02) rotate(0deg) !important;
+      z-index: 30 !important;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    /* Realistic circular patch shadow & hover (follows alpha contour of sewn patch, no box-shadow rect) */
+    .patch-item {
+      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .patch-shadow {
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.32)) drop-shadow(0 14px 20px rgba(35, 15, 5, 0.45));
+      transition: filter 0.25s ease, transform 0.25s ease;
+    }
+
+    .patch-item:hover {
+      transform: scale(1.03) rotate(0deg) !important;
+      z-index: 40 !important;
+    }
+
+    .patch-item:hover .patch-shadow {
+      filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.35)) drop-shadow(0 22px 30px rgba(35, 15, 5, 0.55));
+    }
+
+    /* Lined Paper background for notes */
+    .lined-paper {
+      background-color: #fffef2;
+      background-image: repeating-linear-gradient(transparent, transparent 27px, #e3ecf5 28px);
+      line-height: 28px;
+    }
+
+    /* Subtle pulse animation for green availability dots */
+    @keyframes green-pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.25);
+        opacity: 0.85;
+      }
+    }
+
+    .green-dot-pulse {
+      animation: green-pulse 2s infinite ease-in-out;
+    }
+
+    /* Warm cream page background */
+    .page-bg {
+      background-color: rgb(255, 254, 242);
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #8b5329;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #5a3111;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body class="page-bg font-quicksand text-slate-800 min-h-screen py-3 sm:py-6 px-2 sm:px-6">
+
+  <!-- Main Corkboard Outer Wrapper -->
+  <div
+    class="max-w-6xl mx-auto wood-frame cork-bg rounded-2xl sm:rounded-3xl pt-2 sm:pt-4 md:pt-5 px-4 sm:px-8 md:px-10 pb-6 sm:pb-10 relative overflow-hidden shadow-2xl">
+
+    <!-- Top Header: Pinned Sewn Patch Logo & Pinned White Title Card -->
+    <header class="relative z-20 max-w-5xl mx-auto mb-6 sm:mb-8">
+      <div class="flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-6 sm:gap-8 px-2">
+
+        <!-- Pinned Sewn Patch Logo (Circular alpha shadow, soft kiss overhang, no rectangular box on hover) -->
+        <div
+          class="patch-item relative shrink-0 -rotate-3 select-none z-30 sm:translate-y-1.5 md:translate-y-2 sm:-mb-1 md:-mb-1">
+          <!-- 3D Pushpin pinning the patch onto the corkboard -->
+          <div class="pushpin pin-red -top-2.5 left-1/2"></div>
+          <img src="/img/lizzysits/lizzylogosewn.png" alt="Lizzy Sits Sewn Patch"
+            class="patch-shadow w-56 sm:w-64 md:w-72 h-auto hover:scale-105 transition-transform duration-300">
+        </div>
+
+        <!-- Pinned White Title & Subtitle Card (Wider with single-line sentence subtitle) -->
+        <div
+          class="pin-item bg-white/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-6 sm:p-7 shadow-xl border-2 border-amber-200/60 relative rotate-1 flex-1 max-w-xl md:max-w-2xl text-center sm:text-left">
+          <!-- Pushpins top corners -->
+          <div class="pushpin pin-blue -top-3 left-10"></div>
+          <div class="pushpin pin-yellow -top-3 right-10"></div>
+
+          <h1
+            class="text-3xl sm:text-4xl md:text-5xl font-fredoka font-bold text-slate-800 tracking-tight leading-none drop-shadow-sm">
+            <span class="text-brand-coral">Elizabeth</span> <span class="text-brand-teal">Petro</span>
+          </h1>
+          <p class="font-hand text-xl sm:text-2xl text-slate-600 mt-2.5 leading-snug sm:whitespace-nowrap">A warm,
+            reliable, and fun babysitter for date nights and weekends.</p>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- Corkboard Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start relative z-10">
+
+      <!-- LEFT COLUMN: Interactive Booking Clipboard & Availability Calendar (7 cols) -->
+      <div class="lg:col-span-7 space-y-8">
+
+        <!-- Pinned Clipboard Card for Calendar -->
+        <div
+          class="pin-item bg-amber-50/95 rounded-2xl p-6 sm:p-7 shadow-2xl border-4 border-amber-200/80 relative rotate-[-0.5deg]">
+          <!-- Washi tape at top -->
+          <div class="washi-tape washi-tape-teal"></div>
+          <div class="pushpin pin-yellow -top-3 left-6"></div>
+          <div class="pushpin pin-pink -top-3 right-6"></div>
+
+          <!-- Calendar Header -->
+          <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b-2 border-dashed border-amber-300 gap-3">
+            <div>
+              <span class="font-hand text-brand-coral text-lg font-bold">Pick an open date:</span>
+              <h2 class="text-3xl font-fredoka font-bold text-slate-800 flex items-center gap-2">
+                <i class="fa-regular fa-calendar-days text-brand-teal"></i>
+                <span id="calendarMonthYear">Loading Month...</span>
+              </h2>
+              <div class="flex items-center gap-2 mt-1 text-xs font-medium text-slate-600">
+                <span class="inline-block w-3 h-3 rounded-full bg-emerald-500 shadow-sm green-dot-pulse"></span>
+                <span>Green badge = Elizabeth is available!</span>
+              </div>
+            </div>
+
+            <!-- Month Controls -->
+            <div
+              class="flex items-center gap-2 self-end sm:self-center bg-white px-3 py-1.5 rounded-full border border-amber-200 shadow-sm">
+              <button id="prevMonthBtn"
+                class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-amber-100 text-slate-700 transition"
+                aria-label="Previous Month">
+                <i class="fa-solid fa-chevron-left text-xs"></i>
+              </button>
+              <span id="currentMonthLabel" class="font-fredoka text-sm font-semibold px-2 text-slate-700">Oct
+                2026</span>
+              <button id="nextMonthBtn"
+                class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-amber-100 text-slate-700 transition"
+                aria-label="Next Month">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Days of Week -->
+          <div
+            class="grid grid-cols-7 gap-1 text-center font-fredoka font-semibold text-xs text-amber-900/80 uppercase pt-4 pb-2">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+
+          <!-- Calendar Grid Days (Dynamically Rendered from Live Sheety Data) -->
+          <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Selected Day & Booking Action Box -->
+          <div class="mt-6 pt-5 border-t-2 border-dashed border-amber-300">
+            <div id="selectedSlotBox"
+              class="bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl p-4 border-2 border-teal-200/90 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span
+                    class="bg-teal-100 text-teal-800 text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">Slot
+                    Details</span>
+                  <span id="selectedSlotAvailabilityBadge"
+                    class="bg-emerald-100 text-emerald-800 text-xs px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-circle-check text-emerald-600"></i> Available
+                  </span>
+                </div>
+                <h3 id="selectedDateText" class="text-2xl font-fredoka font-bold text-slate-800 mt-1">Select a day</h3>
+                <p id="selectedTimeText" class="text-slate-600 font-medium text-sm flex items-center gap-1.5 mt-0.5">
+                  <i class="fa-regular fa-clock text-brand-coral"></i> <span>Click any date on the calendar above to see
+                    open times.</span>
+                </p>
+              </div>
+
+              <div id="slotActionContainer" class="w-full sm:w-auto">
+                <button id="bookSlotBtn"
+                  class="w-full sm:w-auto px-6 py-3.5 bg-brand-coral hover:bg-brand-coralDark active:scale-95 text-white font-fredoka font-bold text-lg rounded-2xl shadow-lg shadow-coral-500/30 transition-all flex items-center justify-center gap-2">
+                  <span>Request This Slot</span>
+                  <i class="fa-solid fa-arrow-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Polaroid Photos Section Pinned Below Calendar -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between px-2">
+            <h3 class="font-fredoka text-2xl font-bold text-amber-100 drop-shadow flex items-center gap-2">
+              <i class="fa-solid fa-camera-retro text-amber-300"></i> Lizzy On Duty!
+            </h3>
+            <span class="font-hand text-amber-200 text-lg">Click photos to view!</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+            <!-- Polaroid 1: Storytime & Circle Time -->
+            <div
+              class="pin-item bg-white p-3 pb-5 rounded-sm shadow-xl rotate-[-2deg] border border-stone-200 cursor-pointer"
+              onclick="showPhotoPreview('/img/lizzysits/1.jpeg', 'Storytime & Circle Time', 'Reading aloud with silly voices, interactive learning games, and keeping kids engaged without any screen-time boredom.')">
+              <div class="pushpin pin-red -top-3 left-1/2"></div>
+              <div class="aspect-square bg-amber-100 rounded overflow-hidden relative border border-stone-200">
+                <img src="/img/lizzysits/1.jpeg" alt="Elizabeth reading storybook with kids"
+                  class="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-300">
+              </div>
+              <p class="font-script text-xl font-bold text-center text-slate-700 mt-2.5">"Storytime with funny voices
+                📖"</p>
+            </div>
+
+            <!-- Polaroid 2: Playground & Outdoor Fun -->
+            <div
+              class="pin-item bg-white p-3 pb-5 rounded-sm shadow-xl rotate-[1.5deg] border border-stone-200 cursor-pointer"
+              onclick="showPhotoPreview('/img/lizzysits/2.jpeg', 'Playground & Outdoor Fun', 'Jungle gym games, slides, running around, and plenty of safe, active fresh-air time.')">
+              <div class="pushpin pin-blue -top-3 left-1/2"></div>
+              <div class="aspect-square bg-indigo-50 rounded overflow-hidden relative border border-stone-200">
+                <img src="/img/lizzysits/2.jpeg" alt="Elizabeth playing at playground with toddlers"
+                  class="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-300">
+              </div>
+              <p class="font-script text-xl font-bold text-center text-slate-700 mt-2.5">"Outdoor playground adventures
+                ☀️"</p>
+            </div>
+
+            <!-- Polaroid 3: Snack Time & Smiles -->
+            <div
+              class="pin-item bg-white p-3 pb-5 rounded-sm shadow-xl rotate-[-1.5deg] border border-stone-200 cursor-pointer"
+              onclick="showPhotoPreview('/img/lizzysits/3.jpeg', 'Snack Time & Cozy Moments', 'Smoothies, snacks, and sweet smiles. Creating a comforting, fun environment where kids feel safe and happy.')">
+              <div class="pushpin pin-yellow -top-3 left-1/2"></div>
+              <div class="aspect-square bg-emerald-50 rounded overflow-hidden relative border border-stone-200">
+                <img src="/img/lizzysits/3.jpeg" alt="Elizabeth sharing smoothie with toddler"
+                  class="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-300">
+              </div>
+              <p class="font-script text-xl font-bold text-center text-slate-700 mt-2.5">"Smoothies & big smiles 🍓"</p>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Sticky Notes & Index Cards (5 cols) -->
+      <div class="lg:col-span-5 space-y-7">
+
+        <!-- Mint Lined Index Card: About Elizabeth & Activities -->
+        <div class="pin-item lined-paper rounded-xl p-6 shadow-xl border border-stone-300 relative rotate-[0.8deg]">
+          <div class="washi-tape washi-tape-coral"></div>
+          <div class="pushpin pin-green -top-3 left-10"></div>
+          <div class="pushpin pin-yellow -top-3 right-10"></div>
+
+          <h3 class="font-fredoka text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-list text-brand-coral"></i> About Elizabeth
+          </h3>
+          <ul class="font-hand text-xl text-slate-700 space-y-1">
+            <li class="flex items-start gap-2">
+              <span class="text-brand-coral font-bold">•</span>
+              <span>Junior student-athlete at Rolesville High (4.4 GPA)</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-coral font-bold">•</span>
+              <span>American Red Cross CPR & Infant/Child First-Aid Certified</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-coral font-bold">•</span>
+              <span>Has own safe car & clean North Carolina driving record</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-coral font-bold">•</span>
+              <span>Specialties: Homework help, board games, crafts & bedtime routines</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-coral font-bold">•</span>
+              <span>Rates: $12 - $18/hr (depending on number of children)</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="text-brand-coral font-bold">•</span>
+              <span>Simple Venmo or CashApp Payment Accepted</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Yellow Sticky Note: Testimonial 1 -->
+        <div
+          class="pin-item bg-yellow-200 rounded-sm p-6 shadow-xl border-l-4 border-yellow-300 relative rotate-[1.5deg]">
+          <div class="pushpin pin-red -top-3 left-1/2"></div>
+          <span class="font-script text-sm font-bold text-amber-800 tracking-wider uppercase block mb-1">⭐️ Parent
+            Review</span>
+          <p class="font-hand text-2xl text-slate-800 leading-snug">
+            "They are utterly obsessed with you and we can't thank you enough!"
+          </p>
+          <div class="mt-4 pt-3 border-t border-amber-300/80 flex items-center justify-between gap-2">
+            <span class="font-fredoka font-bold text-slate-700 text-sm">
+              — Hayley <span class="font-quicksand font-semibold text-xs text-slate-600">(Brayden 5, Sebastian 3 & Quinn 8 mo)</span>
+            </span>
+            <div class="text-amber-500 text-xs shrink-0">
+              <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
+                class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pink Sticky Note: Testimonial 2 -->
+        <div class="pin-item bg-rose-200 rounded-sm p-6 shadow-xl border-l-4 border-rose-300 relative rotate-[-2deg]">
+          <div class="pushpin pin-blue -top-3 left-1/2"></div>
+          <span class="font-script text-sm font-bold text-rose-800 tracking-wider uppercase block mb-1">⭐️ Parent
+            Review</span>
+          <p class="font-hand text-2xl text-slate-800 leading-snug">
+            "You are helping so much! And helping my mom not have to drive 3 hours... Seriously a life saver."
+          </p>
+          <div class="mt-4 pt-3 border-t border-rose-300/80 flex items-center justify-between gap-2">
+            <span class="font-fredoka font-bold text-slate-700 text-sm">
+              — Taylor <span class="font-quicksand font-semibold text-xs text-slate-600">(Myers 10 mo)</span>
+            </span>
+            <div class="text-amber-500 text-xs shrink-0">
+              <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i
+                class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Kraft Paper / How it Works Mini Flyer -->
+        <div
+          class="pin-item bg-amber-100/90 rounded-2xl p-5 shadow-lg border-2 border-amber-300 relative rotate-[-1deg]">
+          <div class="pushpin pin-pink -top-3 left-1/2"></div>
+          <h4 class="font-fredoka text-lg font-bold text-amber-900 flex items-center gap-2 mb-2">
+            <i class="fa-solid fa-lightbulb text-amber-600"></i> How Easy Booking Works:
+          </h4>
+          <ol class="font-quicksand text-xs font-semibold text-slate-700 space-y-2">
+            <li class="flex items-start gap-2">
+              <span
+                class="w-5 h-5 rounded-full bg-brand-coral text-white flex items-center justify-center shrink-0 text-xs">1</span>
+              <span>Pick an available date with a green dot on the calendar.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span
+                class="w-5 h-5 rounded-full bg-brand-coral text-white flex items-center justify-center shrink-0 text-xs">2</span>
+              <span>Click <strong>Request This Slot</strong> and type your contact & children info.</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <span
+                class="w-5 h-5 rounded-full bg-brand-coral text-white flex items-center justify-center shrink-0 text-xs">3</span>
+              <span>Elizabeth gets an instant alert on her phone and texts back to confirm!</span>
+            </li>
+          </ol>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Corkboard Footer -->
+    <div
+      class="mt-12 pt-6 border-t border-amber-900/20 text-center relative z-10 flex flex-col sm:flex-row items-center justify-between text-xs font-semibold text-amber-950/70 gap-3">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-heart text-rose-500"></i>
+        <span>© 2026 LizzySits Babysitting • Elizabeth Petro</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span>Rolesville, NC & Surrounding Wake County</span>
+        <a href="/manage" class="text-brand-coral hover:underline font-bold flex items-center gap-1">
+          <i class="fa-solid fa-lock text-[10px]"></i>
+          <span>Manage Availability</span>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOOKING REQUEST MODAL (POPUP) -->
+  <div id="bookingModal"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div
+      class="bg-amber-50 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border-4 border-amber-200 relative animate-in fade-in zoom-in duration-200 my-8">
+
+      <!-- Pushpin top -->
+      <div class="pushpin pin-red -top-3 left-1/2"></div>
+
+      <!-- Close button -->
+      <button onclick="closeBookingModal()"
+        class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-sm hover:bg-slate-100 transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <div class="text-center mb-5">
+        <div class="inline-block p-3 bg-brand-coral/10 text-brand-coral rounded-full mb-2">
+          <i class="fa-solid fa-paper-plane text-2xl"></i>
+        </div>
+        <h3 class="font-fredoka text-2xl sm:text-3xl font-bold text-slate-800">Request Babysitting</h3>
+        <p class="font-hand text-lg text-slate-600" id="modalDateSubtitle">Loading slot details...</p>
+      </div>
+
+      <form id="bookingForm" class="space-y-4">
+        <input type="hidden" id="modalSlotId" value="">
+
+        <div>
+          <label for="parentNameInput" class="block font-fredoka text-sm font-semibold text-slate-700 mb-1">Your Name
+            (Parent / Guardian) *</label>
+          <input type="text" id="parentNameInput" required placeholder="e.g. Sarah & Mark Miller"
+            class="w-full px-4 py-2.5 rounded-xl border border-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-coral bg-white text-slate-800 text-sm font-medium">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="parentPhoneInput" class="block font-fredoka text-sm font-semibold text-slate-700 mb-1">Phone
+              Number (for SMS) *</label>
+            <input type="tel" id="parentPhoneInput" required placeholder="(919) 555-0142"
+              class="w-full px-4 py-2.5 rounded-xl border border-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-coral bg-white text-slate-800 text-sm font-medium">
+          </div>
+          <div>
+            <label for="parentEmailInput" class="block font-fredoka text-sm font-semibold text-slate-700 mb-1">Email
+              Address *</label>
+            <input type="email" id="parentEmailInput" required placeholder="name@example.com"
+              class="w-full px-4 py-2.5 rounded-xl border border-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-coral bg-white text-slate-800 text-sm font-medium">
+          </div>
+        </div>
+
+        <div>
+          <label for="childrenInfoInput" class="block font-fredoka text-sm font-semibold text-slate-700 mb-1">Children
+            Names & Ages *</label>
+          <input type="text" id="childrenInfoInput" required placeholder="e.g. Leo (7), Mia (4)"
+            class="w-full px-4 py-2.5 rounded-xl border border-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-coral bg-white text-slate-800 text-sm font-medium">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="requestedStartTimeInput"
+              class="block font-fredoka text-sm font-semibold text-slate-700 mb-1">Start / Arrival Time *</label>
+            <input type="text" id="requestedStartTimeInput" required placeholder="5:00 PM"
+              class="w-full px-3 py-2.5 rounded-xl border border-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-coral bg-white text-slate-800 text-sm font-medium">
+          </div>
+          <div>
+            <label for="requestedEndTimeInput"
+              class="block font-fredoka text-sm font-semibold text-slate-700 mb-1">Estimated End Time *</label>
+            <input type="text" id="requestedEndTimeInput" required placeholder="e.g. Around 10:30 PM"
+              class="w-full px-3 py-2.5 rounded-xl border border-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-coral bg-white text-slate-800 text-sm font-medium">
+          </div>
+        </div>
+
+        <div id="modalTimeHint"
+          class="text-xs bg-amber-100/70 border border-amber-200 rounded-xl p-2.5 text-amber-900 font-medium">
+          <!-- Dynamic hint about slot flexibility -->
+        </div>
+
+        <div>
+          <label for="bookingLocationInput"
+            class="block font-fredoka text-sm font-semibold text-slate-700 mb-1">Neighborhood / Address</label>
+          <input type="text" id="bookingLocationInput" placeholder="e.g. Carlton Pointe, Rolesville"
+            class="w-full px-4 py-2.5 rounded-xl border border-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-coral bg-white text-slate-800 text-sm font-medium">
+        </div>
+
+        <div>
+          <label for="bookingNotesInput" class="block font-fredoka text-sm font-semibold text-slate-700 mb-1">Special
+            Notes, Allergies, or Bedtime Info</label>
+          <textarea id="bookingNotesInput" rows="2"
+            placeholder="Any allergies, bedtime snacks, favorite games, or pets in the home..."
+            class="w-full px-4 py-2 rounded-xl border border-amber-200 focus:outline-none focus:ring-2 focus:ring-brand-coral bg-white text-slate-800 text-sm font-medium"></textarea>
+        </div>
+
+        <div class="pt-2">
+          <button type="submit" id="submitBookingBtn"
+            class="w-full py-3.5 bg-brand-coral hover:bg-brand-coralDark text-white font-fredoka font-bold text-lg rounded-xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span>Send Request to Elizabeth</span>
+          </button>
+          <p class="text-center text-xs text-slate-500 font-medium mt-2">No upfront payment required. Elizabeth will
+            confirm with you via text.</p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- SUCCESS CONFIRMATION MODAL -->
+  <div id="successModal"
+    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div
+      class="bg-white rounded-3xl max-w-md w-full p-8 shadow-2xl border-4 border-emerald-300 text-center relative animate-in fade-in zoom-in duration-200">
+      <div class="pushpin pin-yellow -top-3 left-1/2"></div>
+      <div
+        class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl shadow-inner">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h3 class="font-fredoka text-3xl font-bold text-slate-800 mb-2">Request Received! 🎉</h3>
+      <p class="font-hand text-2xl text-slate-700 mb-4">
+        Thank you! Elizabeth has been notified via email & text and will message you back shortly to confirm.
+      </p>
+      <div class="bg-amber-50 rounded-xl p-3 border border-amber-200 text-xs font-semibold text-slate-600 mb-6">
+        Date requested: <span id="confirmedDateSpan" class="font-bold text-brand-coral">Friday, Oct 23, 2026</span>
+      </div>
+      <button onclick="closeSuccessModal()"
+        class="w-full py-3 bg-brand-teal hover:bg-teal-700 text-white font-fredoka font-bold text-base rounded-xl transition">
+        Awesome, Thanks!
+      </button>
+    </div>
+  </div>
+
+  <!-- PHOTO PREVIEW MODAL -->
+  <div id="photoModal"
+    class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4"
+    onclick="closePhotoPreview()">
+    <div
+      class="bg-white p-5 sm:p-6 rounded-3xl max-w-md w-full shadow-2xl border-4 border-amber-200 text-center relative max-h-[90vh] overflow-y-auto"
+      onclick="event.stopPropagation()">
+      <div class="pushpin pin-pink -top-3 left-1/2"></div>
+      <button onclick="closePhotoPreview()"
+        class="absolute top-3 right-3 text-slate-400 hover:text-slate-700 w-8 h-8 rounded-full flex items-center justify-center bg-amber-50 hover:bg-amber-100 transition shadow-sm"
+        aria-label="Close Preview">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+      <div
+        class="w-full max-h-80 rounded-2xl overflow-hidden mb-4 border border-stone-200 shadow-inner bg-stone-100 flex items-center justify-center">
+        <img id="photoModalImg" src="" alt="Photo Preview"
+          class="max-h-80 w-auto max-w-full object-contain mx-auto rounded-xl">
+      </div>
+      <h4 id="photoModalTitle" class="font-fredoka text-2xl font-bold text-slate-800"></h4>
+      <p id="photoModalDesc" class="font-hand text-xl text-slate-600 mt-2 leading-relaxed"></p>
+    </div>
+  </div>
+
+  <!-- SHARED CONFIGURATION & LIVE SYSTEM LOGIC -->
+  <script src="config.js"></script>
+  <script>
+    // State of slots loaded from Sheety
+    let allSlots = [];
+    let currentDate = new Date(); // Active viewed month
+    let selectedDateStr = null;
+
+    const MONTH_NAMES = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    const MONTH_ABBR = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+
+    function formatIsoDate(d) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatFriendlyDate(isoStr) {
+      if (!isoStr) return '';
+      const parts = isoStr.split('-');
+      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    // Fetch Slots from Sheety Live API
+    async function fetchBookings() {
+      try {
+        const res = await fetch(`${BOOKING_CONFIG.API_URL}?_t=${Date.now()}`, {
+          cache: 'no-store'
+        });
+        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+        const data = await res.json();
+        allSlots = data.booking || [];
+
+        // If no slot is selected yet, select the first available date or today
+        if (!selectedDateStr) {
+          const firstAvailable = allSlots.find(s => s.status === 'available');
+          if (firstAvailable) {
+            selectedDateStr = firstAvailable.date;
+            // Align viewing month with first available slot
+            const parts = firstAvailable.date.split('-');
+            currentDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+          }
+        }
+
+        renderCalendar();
+        updateSelectedSlotUI();
+      } catch (err) {
+        console.error("Failed to load booking slots:", err);
+        renderCalendar();
+        updateSelectedSlotUI();
+      }
+    }
+
+    // Render Calendar Grid
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      document.getElementById('calendarMonthYear').textContent = `${MONTH_NAMES[month]} ${year}`;
+      document.getElementById('currentMonthLabel').textContent = `${MONTH_ABBR[month]} ${year}`;
+
+      const firstDayIndex = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      // Trailing days of previous month
+      for (let i = firstDayIndex - 1; i >= 0; i--) {
+        const dayNum = daysInPrevMonth - i;
+        const cell = document.createElement('div');
+        cell.className = "h-14 sm:h-16 rounded-xl border border-stone-200/50 bg-stone-100/40 p-1.5 text-xs text-stone-300 font-fredoka flex flex-col justify-between opacity-50 select-none";
+        cell.innerHTML = `<span>${dayNum}</span>`;
+        grid.appendChild(cell);
+      }
+
+      // Days of current month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const thisDate = new Date(year, month, day);
+        thisDate.setHours(0, 0, 0, 0);
+        const isoStr = formatIsoDate(thisDate);
+        const isPast = thisDate < today;
+
+        const dayAvailableSlots = allSlots.filter(s => s.date === isoStr && s.status === 'available');
+        const isAvailable = dayAvailableSlots.length > 0;
+        const isSelected = selectedDateStr === isoStr;
+
+        const cell = document.createElement('div');
+        cell.id = `day-cell-${isoStr}`;
+
+        let cellClasses = "h-14 sm:h-16 rounded-xl p-1.5 text-xs font-fredoka flex flex-col justify-between transition-all duration-150 relative cursor-pointer ";
+
+        if (isPast) {
+          cellClasses += "bg-stone-100/50 border border-stone-200/40 text-stone-300 cursor-not-allowed ";
+        } else if (isSelected) {
+          cellClasses += "bg-rose-50 border-2 border-brand-coral shadow-md scale-105 z-10 ";
+        } else if (isAvailable) {
+          cellClasses += "bg-white hover:bg-emerald-50/80 border-2 border-emerald-300 hover:border-emerald-400 shadow-sm ";
+        } else {
+          cellClasses += "bg-white/70 border border-amber-200/70 text-stone-500 hover:bg-white ";
+        }
+
+        cell.className = cellClasses;
+
+        // Content: Day number and availability badge
+        let badgeHtml = '';
+        if (isAvailable) {
+          badgeHtml = `
+            <div class="flex items-center justify-between w-full">
+              <span class="${isSelected ? 'text-brand-coral font-bold text-sm' : 'text-slate-800 font-bold'}">${day}</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm green-dot-pulse" title="Available"></span>
+            </div>
+            <span class="text-[10px] leading-tight font-hand font-bold text-emerald-700 truncate hidden sm:block">Open</span>
+          `;
+        } else {
+          badgeHtml = `
+            <span class="${isPast ? 'text-stone-300 line-through' : 'text-stone-500'}">${day}</span>
+            <span></span>
+          `;
+        }
+
+        cell.innerHTML = badgeHtml;
+
+        if (!isPast) {
+          cell.onclick = () => {
+            selectedDateStr = isoStr;
+            renderCalendar();
+            updateSelectedSlotUI();
+          };
+        }
+
+        grid.appendChild(cell);
+      }
+    }
+
+    // Update Selected Slot UI Box below calendar
+    function updateSelectedSlotUI() {
+      const dateTextEl = document.getElementById('selectedDateText');
+      const timeTextEl = document.getElementById('selectedTimeText');
+      const badgeEl = document.getElementById('selectedSlotAvailabilityBadge');
+      const actionContainer = document.getElementById('slotActionContainer');
+
+      if (!selectedDateStr) {
+        dateTextEl.textContent = 'Select a day';
+        timeTextEl.innerHTML = `<i class="fa-regular fa-calendar text-stone-400"></i> <span>Pick any day on the calendar above.</span>`;
+        badgeEl.className = "bg-stone-100 text-stone-600 text-xs px-2.5 py-0.5 rounded-full font-bold";
+        badgeEl.textContent = "No Date Chosen";
+        actionContainer.innerHTML = '';
+        return;
+      }
+
+      dateTextEl.textContent = formatFriendlyDate(selectedDateStr);
+
+      const daySlots = allSlots.filter(s => s.date === selectedDateStr);
+      const availableSlots = daySlots.filter(s => s.status === 'available');
+
+      if (availableSlots.length > 0) {
+        const slot = availableSlots[0];
+        const isWhenever = (slot.endTime || '').toLowerCase().includes('whenever');
+        const timeDisplay = isWhenever ? `${slot.startTime} – Whenever` : `${slot.startTime} – ${slot.endTime}`;
+        const descText = isWhenever ? 'Open-ended evening' : 'Scheduled time slot';
+
+        timeTextEl.innerHTML = `<i class="fa-regular fa-clock text-brand-coral"></i> <strong>${timeDisplay}</strong> (${descText})`;
+        badgeEl.className = "bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1";
+        badgeEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> Available`;
+
+        // Render request button
+        actionContainer.innerHTML = `
+          <button onclick="openBookingModal(${slot.id})" class="w-full sm:w-auto px-6 py-3.5 bg-brand-coral hover:bg-brand-coralDark active:scale-95 text-white font-fredoka font-bold text-lg rounded-2xl shadow-lg shadow-coral-500/30 transition-all flex items-center justify-center gap-2">
+            <span>Request This Slot</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        `;
+      } else {
+        const bookedCount = daySlots.filter(s => s.status !== 'available').length;
+        const msg = bookedCount > 0
+          ? `<em>Slot on this day is already booked or pending. You can still message Elizabeth to check availability!</em>`
+          : `<em>No pre-scheduled slot open. You can still message Elizabeth to check availability!</em>`;
+
+        timeTextEl.innerHTML = `<i class="fa-regular fa-calendar-xmark text-stone-400"></i> ${msg}`;
+        badgeEl.className = "bg-amber-100 text-amber-800 text-xs px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1";
+        badgeEl.innerHTML = `<i class="fa-solid fa-clock text-amber-600"></i> On Request`;
+
+        actionContainer.innerHTML = `
+          <button onclick="openCustomInquiryModal('${selectedDateStr}')" class="w-full sm:w-auto px-5 py-3 bg-white hover:bg-amber-50 text-slate-800 border-2 border-amber-300 font-fredoka font-semibold text-base rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2">
+            <span>Ask About This Date</span>
+            <i class="fa-regular fa-envelope text-brand-coral"></i>
+          </button>
+        `;
+      }
+    }
+
+    // Modal Controls
+    window.openBookingModal = function (slotId) {
+      const slot = allSlots.find(s => s.id === slotId);
+      if (!slot) return;
+
+      const modal = document.getElementById('bookingModal');
+      const subtitle = document.getElementById('modalDateSubtitle');
+      const isWhenever = (slot.endTime || '').toLowerCase().includes('whenever');
+      const timeDisplay = isWhenever ? `${slot.startTime} – Whenever (Open-ended)` : `${slot.startTime} – ${slot.endTime}`;
+
+      document.getElementById('modalSlotId').value = slot.id;
+      subtitle.textContent = `For ${formatFriendlyDate(slot.date)} (${timeDisplay})`;
+
+      document.getElementById('requestedStartTimeInput').value = slot.startTime;
+      document.getElementById('requestedEndTimeInput').value = '';
+
+      const hintEl = document.getElementById('modalTimeHint');
+      if (isWhenever) {
+        hintEl.innerHTML = `✨ <strong>Flexible Evening:</strong> Elizabeth is free from ${slot.startTime} onwards until whenever you get home! Let her know roughly what time you estimate getting back.`;
+        document.getElementById('requestedEndTimeInput').placeholder = 'e.g. Around 9:30 PM, 10:30 PM, or late';
+      } else {
+        hintEl.innerHTML = `⏱️ <strong>Fixed Window:</strong> Elizabeth is available until <strong>${slot.endTime}</strong>. Please confirm what time you anticipate wrapping up.`;
+        document.getElementById('requestedEndTimeInput').placeholder = `e.g. By ${slot.endTime}`;
+      }
+
+      document.getElementById('bookingForm').reset();
+      document.getElementById('modalSlotId').value = slot.id;
+      document.getElementById('requestedStartTimeInput').value = slot.startTime;
+
+      modal.classList.remove('hidden');
+    };
+
+    window.openCustomInquiryModal = function (isoDateStr) {
+      // Find a slot on this date or create a virtual reference
+      const daySlots = allSlots.filter(s => s.date === isoDateStr);
+      if (daySlots.length > 0 && daySlots[0].status === 'available') {
+        openBookingModal(daySlots[0].id);
+        return;
+      }
+
+      const modal = document.getElementById('bookingModal');
+      const subtitle = document.getElementById('modalDateSubtitle');
+      subtitle.textContent = `Custom Inquiry for ${formatFriendlyDate(isoDateStr)}`;
+
+      document.getElementById('modalSlotId').value = (daySlots.length > 0) ? daySlots[0].id : '';
+      document.getElementById('requestedStartTimeInput').value = '5:00 PM';
+      document.getElementById('requestedEndTimeInput').value = '9:00 PM';
+
+      const hintEl = document.getElementById('modalTimeHint');
+      hintEl.innerHTML = `💬 <strong>Custom Request:</strong> Elizabeth doesn't have a pre-listed slot for this date, but send your requested times and she will check her schedule!`;
+
+      modal.classList.remove('hidden');
+    };
+
+    window.closeBookingModal = function () {
+      document.getElementById('bookingModal').classList.add('hidden');
+    };
+
+    window.closeSuccessModal = function () {
+      document.getElementById('successModal').classList.add('hidden');
+    };
+
+    // Photo Preview Modal
+    window.showPhotoPreview = function (imgSrc, title, description) {
+      document.getElementById('photoModalImg').src = imgSrc;
+      document.getElementById('photoModalTitle').textContent = title;
+      document.getElementById('photoModalDesc').textContent = description;
+      document.getElementById('photoModal').classList.remove('hidden');
+    };
+
+    window.closePhotoPreview = function () {
+      document.getElementById('photoModal').classList.add('hidden');
+    };
+
+    // Booking Form Submission & Backend Dispatch
+    document.getElementById('bookingForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const slotIdVal = document.getElementById('modalSlotId').value;
+      const slotId = slotIdVal ? parseInt(slotIdVal, 10) : null;
+      const parentName = document.getElementById('parentNameInput').value.trim();
+      const parentPhone = document.getElementById('parentPhoneInput').value.trim();
+      const parentEmail = document.getElementById('parentEmailInput').value.trim();
+      const childrenInfo = document.getElementById('childrenInfoInput').value.trim();
+      const requestedStartTime = document.getElementById('requestedStartTimeInput').value.trim();
+      const requestedEndTime = document.getElementById('requestedEndTimeInput').value.trim();
+      const location = document.getElementById('bookingLocationInput').value.trim();
+      const notes = document.getElementById('bookingNotesInput').value.trim();
+
+      const submitBtn = document.getElementById('submitBookingBtn');
+      const originalBtnHtml = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i><span>Sending Request...</span>`;
+
+      try {
+        const existingSlot = allSlots.find(s => s.id === slotId);
+        const timeSummary = `Needed from ${requestedStartTime} until ${requestedEndTime}`;
+        const combinedNotes = notes ? `[Requested: ${timeSummary}] ${notes}` : `[Requested: ${timeSummary}]`;
+
+        const updatedPayload = {
+          booking: {
+            status: 'pending',
+            parentName: parentName,
+            parentPhone: parentPhone,
+            parentEmail: parentEmail,
+            childrenInfo: childrenInfo,
+            location: location,
+            requestedEndTime: requestedEndTime,
+            notes: combinedNotes,
+            createdAt: new Date().toLocaleString()
+          }
+        };
+
+        // If an existing slot ID is present, update in Sheety
+        if (slotId) {
+          const res = await fetch(`${BOOKING_CONFIG.API_URL}/${slotId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedPayload)
+          });
+          if (!res.ok) throw new Error(`Sheety update failed: ${res.status}`);
+        }
+
+        const updatedBooking = {
+          ...existingSlot,
+          ...updatedPayload.booking,
+          date: existingSlot ? existingSlot.date : selectedDateStr,
+          startTime: requestedStartTime || (existingSlot ? existingSlot.startTime : '5:00 PM'),
+          requestedEndTime: requestedEndTime,
+          id: slotId || 999
+        };
+
+        // Notify Elizabeth via Google Apps Script (Email + Spectrum SMS)
+        await notifyElizabethOfBooking(updatedBooking);
+
+        // Close request modal and show celebration success modal
+        closeBookingModal();
+
+        document.getElementById('confirmedDateSpan').textContent = formatFriendlyDate(updatedBooking.date);
+        document.getElementById('successModal').classList.remove('hidden');
+
+        // Confetti celebration
+        if (window.confetti) {
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#FF6B57', '#20B2AA', '#FFD166', '#FFE5EC']
+          });
+        }
+
+        // Refresh slots from Sheety
+        await fetchBookings();
+
+      } catch (err) {
+        console.error("Booking submission failed:", err);
+        alert("Something went wrong submitting your request. Please try again or reach out to Elizabeth directly!");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnHtml;
+      }
+    });
+
+    // Close modals on clicking backdrop
+    document.getElementById('bookingModal').addEventListener('click', (e) => {
+      if (e.target.id === 'bookingModal') closeBookingModal();
+    });
+    document.getElementById('successModal').addEventListener('click', (e) => {
+      if (e.target.id === 'successModal') closeSuccessModal();
+    });
+
+    // Month Navigation
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    });
+
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    // Initialize on load
+    window.onload = function () {
+      fetchBookings();
+    };
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Availability • Lizzy Sits Babysitting</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'brand-bg': '#F9FAFB',
+                        'brand-surface': '#FFFFFF',
+                        'brand-primary': '#F43F5E', // Rose 500
+                        'brand-primary-hover': '#E11D48',
+                        'brand-text': '#111827',
+                        'brand-subtext': '#6B7280',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-brand-bg text-brand-text min-h-screen flex flex-col font-sans antialiased selection:bg-rose-100 selection:text-brand-primary">
+
+    <!-- Auth PIN Gate (Shown when not authenticated) -->
+    <div id="auth-gate" class="fixed inset-0 z-50 bg-gray-900/60 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-8 shadow-2xl border border-gray-100 text-center">
+            <div class="w-14 h-14 rounded-2xl bg-rose-50 text-brand-primary flex items-center justify-center mx-auto mb-4 border border-rose-100 shadow-xs">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900">Elizabeth's Portal</h3>
+            <p class="text-xs text-brand-subtext mt-1 mb-6">Enter your PIN to manage your availability & booking requests.</p>
+
+            <form id="pin-form" class="space-y-4">
+                <div>
+                    <input type="password" id="pin-input" maxlength="6" inputmode="numeric" placeholder="Enter PIN" autofocus
+                        class="w-full text-center text-2xl tracking-widest py-3 px-4 rounded-xl border border-gray-300 focus:border-brand-primary focus:ring-2 focus:ring-rose-200 outline-none transition-all">
+                    <p id="pin-error" class="hidden text-xs text-rose-600 font-semibold mt-2">Incorrect PIN. Please try again.</p>
+                </div>
+
+                <div class="flex items-center justify-center gap-2 text-xs text-gray-600">
+                    <input type="checkbox" id="remember-me" checked class="rounded text-brand-primary focus:ring-rose-200">
+                    <label for="remember-me">Stay signed in on this phone</label>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-3 px-4 rounded-xl bg-brand-primary hover:bg-brand-primary-hover text-white font-bold text-sm shadow-md transition-all active:scale-[0.99]">
+                    Unlock Portal
+                </button>
+            </form>
+
+            <div class="mt-6 border-t border-gray-100 pt-4">
+                <a href="/" class="text-xs text-brand-subtext hover:text-brand-primary transition-colors">
+                    ← Back to Public Booking Page
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Protected Dashboard -->
+    <div id="dashboard-app" class="hidden flex-1 flex flex-col">
+        
+        <!-- Header -->
+        <header class="bg-white border-b border-gray-200 sticky top-0 z-30 shadow-xs">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <img src="/img/lizzysits/e-top.png" alt="Elizabeth Petro" class="w-10 h-10 rounded-full object-cover object-top border border-rose-200 shadow-xs">
+                    <div>
+                        <h1 class="text-base font-bold text-gray-900 leading-tight">Lizzy Sits • Babysitting Dashboard</h1>
+                        <p class="text-xs text-brand-subtext flex items-center gap-1.5">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            Connected to Google Sheets via Sheety
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <a href="/" target="_blank" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        <span>View Live Booking Site</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                    </a>
+                    <button id="settings-btn" class="p-2 rounded-xl text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors" title="Settings">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    </button>
+                    <button id="lock-btn" class="p-2 rounded-xl text-gray-500 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Lock / Sign Out">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Body -->
+        <main class="flex-1 max-w-6xl mx-auto w-full px-4 sm:px-6 py-6 space-y-6">
+            
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                
+                <!-- Pending Card -->
+                <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-brand-subtext uppercase tracking-wider">Pending Requests</p>
+                        <h4 id="stat-pending-count" class="text-2xl font-extrabold text-gray-900 mt-1">0</h4>
+                    </div>
+                    <div id="stat-pending-icon" class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </div>
+                </div>
+
+                <!-- Confirmed Card -->
+                <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-brand-subtext uppercase tracking-wider">Upcoming Confirmed</p>
+                        <h4 id="stat-confirmed-count" class="text-2xl font-extrabold text-gray-900 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                </div>
+
+                <!-- Available Slots Card -->
+                <div class="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-semibold text-brand-subtext uppercase tracking-wider">Available Slots Open</p>
+                        <h4 id="stat-available-count" class="text-2xl font-extrabold text-gray-900 mt-1">0</h4>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-rose-50 text-brand-primary flex items-center justify-center font-bold">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="flex items-center gap-2 border-b border-gray-200 pb-2">
+                <button id="tab-btn-pending" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 bg-brand-primary text-white shadow-xs">
+                    <span>Pending Requests</span>
+                    <span id="tab-badge-pending" class="hidden px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-white text-brand-primary">0</span>
+                </button>
+                <button id="tab-btn-availability" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all">
+                    <span>Manage Calendar & Slots</span>
+                </button>
+                <button id="tab-btn-confirmed" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all">
+                    <span>Upcoming Confirmed Jobs</span>
+                </button>
+            </div>
+
+            <!-- TAB 1: PENDING REQUESTS -->
+            <section id="tab-section-pending" class="space-y-4">
+                <div id="pending-list" class="space-y-4">
+                    <p class="text-xs text-brand-subtext py-8 text-center">Loading requests...</p>
+                </div>
+            </section>
+
+            <!-- TAB 2: AVAILABILITY & SLOTS CALENDAR -->
+            <section id="tab-section-availability" class="hidden space-y-6">
+                
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    
+                    <!-- Calendar View (7 cols) -->
+                    <div class="lg:col-span-7 bg-white rounded-2xl border border-gray-200 p-6 shadow-xs">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 id="manage-calendar-title" class="text-lg font-bold text-gray-900">October 2026</h3>
+                            <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl">
+                                <button id="manage-prev-month" class="p-1.5 rounded-lg hover:bg-white text-gray-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <button id="manage-next-month" class="p-1.5 rounded-lg hover:bg-white text-gray-700">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Days of Week -->
+                        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+                            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                        </div>
+
+                        <!-- Calendar Grid -->
+                        <div id="manage-calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
+                    </div>
+
+                    <!-- Add Slot & Manage Selected Day (5 cols) -->
+                    <div class="lg:col-span-5 space-y-6">
+                        
+                        <!-- Add New Slot Form -->
+                        <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs">
+                            <h4 class="text-sm font-bold text-gray-900 mb-1 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                <span>Add Available Slot</span>
+                            </h4>
+                            <p class="text-xs text-brand-subtext mb-4">Add a fixed slot to this date so families can book it.</p>
+
+                            <form id="add-slot-form" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Date</label>
+                                    <input type="date" id="add-slot-date" required
+                                        class="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-brand-primary focus:ring-1 focus:ring-rose-200 outline-none text-xs">
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3 items-end">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1">Start Time</label>
+                                        <input type="text" id="add-slot-start" required placeholder="5:00 PM"
+                                            class="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-brand-primary focus:ring-1 focus:ring-rose-200 outline-none text-xs">
+                                    </div>
+                                    <div id="end-time-container">
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1">End Time</label>
+                                        <input type="text" id="add-slot-end" required placeholder="Whenever or 9:00 PM"
+                                            class="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-brand-primary focus:ring-1 focus:ring-rose-200 outline-none text-xs">
+                                    </div>
+                                </div>
+
+                                <!-- Open-ended toggle -->
+                                <div class="flex items-center gap-2 p-2.5 rounded-xl bg-gray-50 border border-gray-200 text-xs text-gray-700">
+                                    <input type="checkbox" id="open-ended-checkbox" checked class="rounded text-brand-primary focus:ring-rose-200 w-4 h-4">
+                                    <label for="open-ended-checkbox" class="cursor-pointer select-none font-medium">
+                                        Open-ended ("Until whenever" / flexible end time)
+                                    </label>
+                                </div>
+
+                                <!-- Quick Presets -->
+                                <div>
+                                    <p class="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Quick Presets:</p>
+                                    <div class="flex flex-wrap gap-1.5">
+                                        <button type="button" onclick="setSlotPreset('5:00 PM', 'Whenever', true)" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] font-semibold transition-colors">5 PM - Whenever</button>
+                                        <button type="button" onclick="setSlotPreset('6:00 PM', 'Whenever', true)" class="px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] font-semibold transition-colors">6 PM - Whenever</button>
+                                        <button type="button" onclick="setSlotPreset('2:00 PM', '4:00 PM', false)" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-medium transition-colors">2 - 4 PM (Capped)</button>
+                                        <button type="button" onclick="setSlotPreset('4:00 PM', '8:00 PM', false)" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-medium transition-colors">4 - 8 PM (Capped)</button>
+                                        <button type="button" onclick="setSlotPreset('12:00 PM', 'Whenever', true)" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-[11px] font-medium transition-colors">Afternoon - Whenever</button>
+                                    </div>
+                                </div>
+
+                                <button type="submit" id="add-slot-submit-btn"
+                                    class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-[0.99] flex items-center justify-center gap-1.5">
+                                    <span>Add Slot to Schedule</span>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Slots on Selected Date -->
+                        <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-xs">
+                            <h4 id="selected-day-slots-title" class="text-sm font-bold text-gray-900 mb-3">Slots on Selected Date</h4>
+                            <div id="selected-day-slots-list" class="space-y-2">
+                                <p class="text-xs text-brand-subtext">Select a date on the calendar to view and manage its slots.</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- TAB 3: CONFIRMED JOBS -->
+            <section id="tab-section-confirmed" class="hidden space-y-4">
+                <div id="confirmed-list" class="space-y-4">
+                    <p class="text-xs text-brand-subtext py-8 text-center">No confirmed jobs yet.</p>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Review Decision Modal (Accept or Decline) -->
+    <div id="decision-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-100">
+            <div class="flex items-start justify-between pb-3 border-b border-gray-100 mb-4">
+                <div>
+                    <span id="decision-action-badge" class="text-xs font-bold uppercase tracking-wider text-emerald-600">Accept Request</span>
+                    <h3 id="decision-modal-title" class="text-lg font-bold text-gray-900">Confirm with Family</h3>
+                </div>
+                <button id="close-decision-btn" class="p-1 rounded-full text-gray-400 hover:text-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Booking Summary -->
+            <div id="decision-summary" class="bg-gray-50 rounded-xl p-3.5 text-xs text-gray-700 space-y-1 mb-4">
+                <!-- Injected via JS -->
+            </div>
+
+            <form id="decision-form" class="space-y-4">
+                <input type="hidden" id="decision-slot-id" value="">
+                <input type="hidden" id="decision-action-type" value="accept">
+
+                <div>
+                    <label for="decision-message" class="block text-xs font-semibold text-gray-700 mb-1">
+                        Optional message to family:
+                    </label>
+                    <textarea id="decision-message" rows="3" placeholder="e.g. 'Looking forward to babysitting Maya! See you at 5:00.'"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-brand-primary focus:ring-1 focus:ring-rose-200 outline-none text-xs"></textarea>
+                </div>
+
+                <div id="decline-reopen-option" class="hidden flex items-center gap-2 text-xs text-gray-600">
+                    <input type="checkbox" id="reopen-slot-checkbox" checked class="rounded text-brand-primary">
+                    <label for="reopen-slot-checkbox">Reopen this slot on the calendar for others</label>
+                </div>
+
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeDecisionModal()" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" id="decision-submit-btn"
+                        class="flex-1 py-2.5 rounded-xl text-white font-bold text-xs shadow-xs transition-all bg-emerald-600 hover:bg-emerald-700">
+                        Confirm & Notify
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs hidden">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-100">
+            <div class="flex items-start justify-between pb-3 border-b border-gray-100 mb-4">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-brand-primary">Portal Preferences</span>
+                    <h3 class="text-lg font-bold text-gray-900">Settings</h3>
+                </div>
+                <button id="close-settings-btn" class="p-1 rounded-full text-gray-400 hover:text-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <form id="settings-form" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Elizabeth's Spectrum Mobile Phone (for SMS alerts)</label>
+                    <input type="tel" id="settings-phone" placeholder="e.g. 9195551234"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-brand-primary outline-none">
+                    <p class="text-[10px] text-brand-subtext mt-1">Alerts are sent to your phone via Spectrum gateway (@vtext.com).</p>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Google Apps Script Web App URL (Email & SMS Backend)</label>
+                    <input type="url" id="settings-appscript" placeholder="https://script.google.com/macros/s/.../exec"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-brand-primary outline-none">
+                    <p class="text-[10px] text-brand-subtext mt-1">Pasted from Google Sheets > Extensions > Apps Script deployment.</p>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Change PIN</label>
+                    <input type="password" id="settings-new-pin" placeholder="Enter new 4-digit PIN"
+                        class="w-full px-3 py-2 rounded-xl border border-gray-300 focus:border-brand-primary outline-none">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-2.5 rounded-xl bg-brand-primary hover:bg-brand-primary-hover text-white font-bold transition-all shadow-xs">
+                        Save Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom In-App Delete Confirmation Modal (Never blocked by browser) -->
+    <div id="delete-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs hidden">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 text-center animate-in fade-in zoom-in-95 duration-150">
+            <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-3 border border-rose-100 shadow-xs">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </div>
+            <h3 class="text-base font-bold text-gray-900" id="delete-modal-title">Delete Slot?</h3>
+            <p class="text-xs text-brand-subtext mt-1.5 mb-5" id="delete-modal-message">Are you sure you want to remove this slot from your schedule?</p>
+
+            <div class="flex gap-2">
+                <button type="button" id="delete-modal-cancel-btn" class="flex-1 py-2.5 rounded-xl border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
+                    Keep It
+                </button>
+                <button type="button" id="delete-modal-confirm-btn" class="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5">
+                    <span id="delete-modal-confirm-text">Yes, Remove</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Scripts -->
+    <script src="../config.js"></script>
+    <script>
+        // State
+        let allBookings = [];
+        let manageCurrentMonth = new Date();
+        let manageSelectedDateStr = formatIsoDate(new Date());
+
+        function formatIsoDate(d) {
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatFriendlyDate(isoStr) {
+            if (!isoStr) return '';
+            const parts = isoStr.split('-');
+            const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+            return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        // Non-blocking in-app toast notification helper
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            const isSuccess = type === 'success';
+            toast.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-xl text-xs font-bold flex items-center gap-2 transform transition-all duration-300 translate-y-2 opacity-0 ${
+                isSuccess ? 'bg-gray-900 text-white border border-gray-800' : 'bg-rose-600 text-white'
+            }`;
+            toast.innerHTML = `
+                <span>${isSuccess ? '✓' : '⚠️'}</span>
+                <span>${message}</span>
+            `;
+            container.appendChild(toast);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function getRequestedEndTime(b) {
+            if (!b) return null;
+            if (b.requestedEndTime) return b.requestedEndTime;
+            if (b.notes) {
+                const match = b.notes.match(/until\s+([^\]]+)\]/i);
+                if (match) return match[1].trim();
+            }
+            return null;
+        }
+
+        // Authentication Check
+        function checkAuth() {
+            if (isManagerAuthenticated()) {
+                document.getElementById('auth-gate').classList.add('hidden');
+                document.getElementById('dashboard-app').classList.remove('hidden');
+                loadDashboardData();
+            } else {
+                document.getElementById('auth-gate').classList.remove('hidden');
+                document.getElementById('dashboard-app').classList.add('hidden');
+            }
+        }
+
+        // PIN Form Submit
+        document.getElementById('pin-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const enteredPin = document.getElementById('pin-input').value.trim();
+            const rememberMe = document.getElementById('remember-me').checked;
+
+            if (verifyPin(enteredPin)) {
+                document.getElementById('pin-error').classList.add('hidden');
+                setManagerSession(rememberMe ? 30 : 1);
+                checkAuth();
+            } else {
+                document.getElementById('pin-error').classList.remove('hidden');
+                document.getElementById('pin-input').value = '';
+                document.getElementById('pin-input').focus();
+            }
+        });
+
+        // Sign Out / Lock
+        document.getElementById('lock-btn').addEventListener('click', () => {
+            clearManagerSession();
+            checkAuth();
+        });
+
+        // Load Data from Sheety
+        async function loadDashboardData() {
+            try {
+                const res = await fetch(`${BOOKING_CONFIG.API_URL}?_t=${Date.now()}`, {
+                    cache: 'no-store'
+                });
+                if (!res.ok) throw new Error(`HTTP: ${res.status}`);
+                const data = await res.json();
+                allBookings = data.booking || [];
+
+                updateStats();
+                renderPendingList();
+                renderConfirmedList();
+                renderManageCalendar();
+                renderManageDaySlots(manageSelectedDateStr);
+
+                // Check URL parameter for direct request review
+                const urlParams = new URLSearchParams(window.location.search);
+                const reqId = urlParams.get('request');
+                if (reqId) {
+                    const target = allBookings.find(b => String(b.id) === String(reqId));
+                    if (target && target.status === 'pending') {
+                        openDecisionModal(target.id, 'accept');
+                    }
+                }
+            } catch (err) {
+                console.error("Failed to load dashboard data:", err);
+            }
+        }
+
+        // Update Stats Counters
+        function updateStats() {
+            const pending = allBookings.filter(b => b.status === 'pending');
+            const confirmed = allBookings.filter(b => b.status === 'accepted');
+            const available = allBookings.filter(b => b.status === 'available');
+
+            document.getElementById('stat-pending-count').textContent = pending.length;
+            document.getElementById('stat-confirmed-count').textContent = confirmed.length;
+            document.getElementById('stat-available-count').textContent = available.length;
+
+            const badge = document.getElementById('tab-badge-pending');
+            if (pending.length > 0) {
+                badge.textContent = pending.length;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // Render Pending Requests List
+        function renderPendingList() {
+            const container = document.getElementById('pending-list');
+            const pending = allBookings.filter(b => b.status === 'pending');
+
+            if (pending.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl border border-gray-200 p-10 text-center text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <h4 class="font-bold text-gray-900">All Caught Up!</h4>
+                        <p class="text-xs text-brand-subtext mt-1">There are no pending babysitting requests to review.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = pending.map(b => {
+                const reqEnd = getRequestedEndTime(b);
+                return `
+                <div class="bg-white rounded-2xl border-2 border-amber-300 p-5 sm:p-6 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-3">
+                        <div>
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                Needs Review
+                            </span>
+                            <h4 class="text-lg font-bold text-gray-900 mt-1">${b.parentName || 'Family'}</h4>
+                            <div class="flex flex-wrap items-center gap-2 mt-1">
+                                <span class="text-xs text-brand-subtext font-semibold">${formatFriendlyDate(b.date)} • Available: ${b.startTime} – ${b.endTime}</span>
+                                ${reqEnd ? `
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 font-extrabold text-xs border border-amber-200">
+                                        ⏱️ Needed until: ${reqEnd}
+                                    </span>
+                                ` : ''}
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="openDecisionModal(${b.id}, 'decline')"
+                                class="px-3.5 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold text-xs transition-colors">
+                                Decline
+                            </button>
+                            <button onclick="openDecisionModal(${b.id}, 'accept')"
+                                class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all active:scale-95 flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                <span>Accept Request</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Details Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                        <div class="bg-gray-50 p-3 rounded-xl">
+                            <span class="font-semibold text-gray-500 uppercase text-[10px] block">Children</span>
+                            <span class="font-bold text-gray-800 mt-0.5 block">${b.childrenInfo || 'Not specified'}</span>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-xl">
+                            <span class="font-semibold text-gray-500 uppercase text-[10px] block">Contact</span>
+                            <div class="mt-0.5 flex flex-wrap gap-2 items-center">
+                                <a href="tel:${b.parentPhone}" class="font-bold text-brand-primary hover:underline">${b.parentPhone || 'No Phone'}</a>
+                                <span class="text-gray-300">•</span>
+                                <a href="mailto:${b.parentEmail}" class="font-bold text-brand-primary hover:underline truncate max-w-[150px]">${b.parentEmail || 'No Email'}</a>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 p-3 rounded-xl">
+                            <span class="font-semibold text-gray-500 uppercase text-[10px] block">Neighborhood / Location</span>
+                            <span class="font-medium text-gray-800 mt-0.5 block">${b.location || 'Not provided'}</span>
+                        </div>
+                    </div>
+
+                    ${b.notes ? `
+                        <div class="text-xs bg-rose-50/50 border border-rose-100 rounded-xl p-3">
+                            <span class="font-bold text-brand-primary block mb-0.5">Parent Notes:</span>
+                            <p class="text-gray-700 italic">"${b.notes}"</p>
+                        </div>
+                    ` : ''}
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Render Confirmed Bookings List
+        function renderConfirmedList() {
+            const container = document.getElementById('confirmed-list');
+            const confirmed = allBookings
+                .filter(b => b.status === 'accepted')
+                .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+            if (confirmed.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white rounded-2xl border border-gray-200 p-10 text-center text-gray-500">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <h4 class="font-bold text-gray-900">No Confirmed Jobs Yet</h4>
+                        <p class="text-xs text-brand-subtext mt-1">Confirmed jobs will show here with family contact details.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = confirmed.map(b => {
+                const reqEnd = getRequestedEndTime(b);
+                return `
+                <div class="bg-white rounded-2xl border border-emerald-200 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Confirmed Job</span>
+                            <h4 class="text-base font-bold text-gray-900">${b.parentName || 'Family'}</h4>
+                        </div>
+                        <p class="text-xs font-semibold text-gray-700 mt-1">
+                            ${formatFriendlyDate(b.date)} • ${b.startTime} – ${b.endTime}
+                            ${reqEnd ? `<span class="ml-2 font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">Needed until: ${reqEnd}</span>` : ''}
+                        </p>
+                        <p class="text-xs text-brand-subtext mt-0.5">Kids: <span class="font-medium text-gray-800">${b.childrenInfo || 'N/A'}</span> • Location: <span class="font-medium text-gray-800">${b.location || 'N/A'}</span></p>
+                        ${b.notes ? `<p class="text-xs text-gray-600 mt-1 italic">"${b.notes}"</p>` : ''}
+                    </div>
+
+                    <div class="flex items-center gap-2 shrink-0">
+                        ${b.parentPhone ? `
+                            <a href="tel:${b.parentPhone}" class="px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-colors flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                                <span>Call</span>
+                            </a>
+                            <a href="sms:${b.parentPhone}" class="px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold transition-colors flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                <span>Text</span>
+                            </a>
+                        ` : ''}
+                        <button onclick="deleteSlot(${b.id})" class="px-2.5 py-1.5 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors flex items-center gap-1" title="Cancel this job">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            <span>Cancel</span>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // Render Calendar on Availability Tab
+        const MONTH_NAMES = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+
+        function renderManageCalendar() {
+            const year = manageCurrentMonth.getFullYear();
+            const month = manageCurrentMonth.getMonth();
+
+            document.getElementById('manage-calendar-title').textContent = `${MONTH_NAMES[month]} ${year}`;
+
+            const firstDayIndex = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+            const grid = document.getElementById('manage-calendar-grid');
+            grid.innerHTML = '';
+
+            // Previous month
+            for (let i = firstDayIndex - 1; i >= 0; i--) {
+                const dayNum = daysInPrevMonth - i;
+                const cell = document.createElement('div');
+                cell.className = 'h-12 p-1 text-[11px] text-gray-300 rounded-xl select-none opacity-40';
+                cell.innerHTML = `<span>${dayNum}</span>`;
+                grid.appendChild(cell);
+            }
+
+            // Current month days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateObj = new Date(year, month, day);
+                const isoStr = formatIsoDate(dateObj);
+                const isSelected = manageSelectedDateStr === isoStr;
+
+                const daySlots = allBookings.filter(b => b.date === isoStr);
+                const hasPending = daySlots.some(b => b.status === 'pending');
+                const hasAccepted = daySlots.some(b => b.status === 'accepted');
+                const hasAvailable = daySlots.some(b => b.status === 'available');
+
+                const cell = document.createElement('button');
+                cell.type = 'button';
+                let classes = 'h-12 p-1.5 rounded-xl text-[11px] flex flex-col justify-between border text-left transition-all ';
+
+                if (isSelected) {
+                    classes += 'bg-rose-50 border-brand-primary font-bold shadow-xs ring-2 ring-rose-200 ';
+                } else if (hasPending) {
+                    classes += 'bg-amber-50/70 border-amber-300 font-semibold ';
+                } else if (hasAccepted) {
+                    classes += 'bg-emerald-50/70 border-emerald-300 font-semibold ';
+                } else if (hasAvailable) {
+                    classes += 'bg-white border-emerald-300 font-semibold ';
+                } else {
+                    classes += 'bg-white border-gray-100 text-gray-700 hover:bg-gray-50 ';
+                }
+
+                cell.className = classes;
+
+                // Dots indicator
+                let dotsHtml = '';
+                if (hasPending) {
+                    dotsHtml += '<span class="w-2 h-2 rounded-full bg-amber-500"></span>';
+                }
+                if (hasAccepted) {
+                    dotsHtml += '<span class="w-2 h-2 rounded-full bg-emerald-600"></span>';
+                }
+                if (hasAvailable && !hasPending && !hasAccepted) {
+                    dotsHtml += '<span class="w-2 h-2 rounded-full bg-emerald-400"></span>';
+                }
+
+                cell.innerHTML = `
+                    <div class="flex items-center justify-between w-full">
+                        <span>${day}</span>
+                        <div class="flex gap-0.5">${dotsHtml}</div>
+                    </div>
+                `;
+
+                cell.addEventListener('click', () => {
+                    manageSelectedDateStr = isoStr;
+                    document.getElementById('add-slot-date').value = isoStr;
+                    renderManageCalendar();
+                    renderManageDaySlots(isoStr);
+                });
+
+                grid.appendChild(cell);
+            }
+        }
+
+        // Render Day Slots List on Manage Tab
+        function renderManageDaySlots(isoStr) {
+            const container = document.getElementById('selected-day-slots-list');
+            const title = document.getElementById('selected-day-slots-title');
+
+            title.textContent = `Slots on ${formatFriendlyDate(isoStr)}`;
+            document.getElementById('add-slot-date').value = isoStr;
+
+            const daySlots = allBookings.filter(b => b.date === isoStr);
+
+            if (daySlots.length === 0) {
+                container.innerHTML = `
+                    <p class="text-xs text-brand-subtext py-3">No slots configured for this date yet. Use the form above to add an available slot.</p>
+                `;
+                return;
+            }
+
+            container.innerHTML = daySlots.map(s => {
+                let badge = '';
+
+                if (s.status === 'available') {
+                    badge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Open Slot</span>';
+                } else if (s.status === 'pending') {
+                    badge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800">Pending: ${s.parentName || 'Family'}</span>`;
+                } else if (s.status === 'accepted') {
+                    badge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">Confirmed: ${s.parentName || 'Family'}</span>`;
+                } else {
+                    badge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700">${s.status}</span>`;
+                }
+
+                const isWhenever = (s.endTime || '').toLowerCase().includes('whenever');
+                const timeBadge = isWhenever 
+                    ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Open-ended</span>'
+                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">Capped at ${s.endTime}</span>`;
+
+                return `
+                    <div class="p-3 rounded-xl border border-gray-200 bg-gray-50/70 flex items-center justify-between gap-2 text-xs">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-gray-900">${s.startTime} – ${s.endTime}</span>
+                                ${timeBadge}
+                                ${badge}
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1">
+                            ${s.status === 'pending' ? `
+                                <button onclick="openDecisionModal(${s.id}, 'accept')" class="px-2.5 py-1 rounded-lg bg-emerald-600 text-white font-bold text-[11px]">Review</button>
+                            ` : ''}
+                            <button onclick="deleteSlot(${s.id})" class="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors" title="Delete Slot">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Add Slot Form Submit
+        document.getElementById('add-slot-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const date = document.getElementById('add-slot-date').value;
+            const startTime = document.getElementById('add-slot-start').value.trim();
+            const endTime = document.getElementById('add-slot-end').value.trim();
+
+            const btn = document.getElementById('add-slot-submit-btn');
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(BOOKING_CONFIG.API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        booking: {
+                            date: date,
+                            startTime: startTime,
+                            endTime: endTime,
+                            status: 'available'
+                        }
+                    })
+                });
+
+                if (!res.ok) throw new Error(`POST failed: ${res.status}`);
+
+                // Reload data
+                await loadDashboardData();
+                showToast(`Added slot on ${formatFriendlyDate(date)} (${startTime} - ${endTime})`);
+            } catch (err) {
+                console.error("Failed to add slot:", err);
+                showToast("Error adding slot. Please try again.", "error");
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Toggle Open-ended checkbox
+        const openEndedCheckbox = document.getElementById('open-ended-checkbox');
+        const endInput = document.getElementById('add-slot-end');
+
+        function updateOpenEndedUi() {
+            if (openEndedCheckbox.checked) {
+                endInput.value = 'Whenever';
+                endInput.readOnly = true;
+                endInput.classList.add('bg-gray-100', 'text-gray-500');
+            } else {
+                if (endInput.value === 'Whenever') endInput.value = '9:00 PM';
+                endInput.readOnly = false;
+                endInput.classList.remove('bg-gray-100', 'text-gray-500');
+            }
+        }
+
+        openEndedCheckbox.addEventListener('change', updateOpenEndedUi);
+
+        // Set Slot Preset Helper
+        window.setSlotPreset = function(start, end, isOpenEnded = false) {
+            document.getElementById('add-slot-start').value = start;
+            endInput.value = end;
+            openEndedCheckbox.checked = !!isOpenEnded;
+            updateOpenEndedUi();
+        };
+
+        // Initialize preset state
+        updateOpenEndedUi();
+
+        // In-App Deletion Flow (Never blocked by browser dialog suppression)
+        let slotPendingDelete = null;
+
+        window.deleteSlot = function(slotId) {
+            const booking = allBookings.find(b => String(b.id) === String(slotId));
+            slotPendingDelete = slotId;
+
+            let title = "Remove Available Slot?";
+            let msg = "Are you sure you want to remove this slot from your schedule?";
+            let confirmBtnText = "Yes, Remove";
+
+            if (booking) {
+                if (booking.status === 'accepted') {
+                    title = "Cancel Confirmed Job?";
+                    msg = `Cancel the confirmed job for ${booking.parentName || 'this family'} on ${formatFriendlyDate(booking.date)} (${booking.startTime} – ${booking.endTime})?`;
+                    confirmBtnText = "Yes, Cancel Job";
+                } else if (booking.status === 'pending') {
+                    title = "Delete Request?";
+                    msg = `Delete this pending request from ${booking.parentName || 'this family'}?`;
+                    confirmBtnText = "Yes, Delete";
+                } else {
+                    title = "Remove Available Slot?";
+                    msg = `Remove slot on ${formatFriendlyDate(booking.date)} (${booking.startTime} – ${booking.endTime})?`;
+                    confirmBtnText = "Yes, Remove";
+                }
+            }
+
+            document.getElementById('delete-modal-title').textContent = title;
+            document.getElementById('delete-modal-message').textContent = msg;
+            document.getElementById('delete-modal-confirm-text').textContent = confirmBtnText;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        };
+
+        document.getElementById('delete-modal-cancel-btn').addEventListener('click', () => {
+            document.getElementById('delete-modal').classList.add('hidden');
+            slotPendingDelete = null;
+        });
+
+        document.getElementById('delete-modal-confirm-btn').addEventListener('click', async () => {
+            if (!slotPendingDelete) return;
+            const slotId = slotPendingDelete;
+            document.getElementById('delete-modal').classList.add('hidden');
+            slotPendingDelete = null;
+
+            // Instant optimistic removal from UI
+            const prevBookings = [...allBookings];
+            allBookings = allBookings.filter(b => String(b.id) !== String(slotId));
+            updateStats();
+            renderPendingList();
+            renderConfirmedList();
+            renderManageCalendar();
+            renderManageDaySlots(manageSelectedDateStr);
+            showToast("Slot removed from schedule");
+
+            try {
+                const res = await fetch(`${BOOKING_CONFIG.API_URL}/${slotId}`, {
+                    method: 'DELETE'
+                });
+
+                if (res.ok || res.status === 204 || res.status === 404) {
+                    await loadDashboardData();
+                } else {
+                    throw new Error(`DELETE returned status: ${res.status}`);
+                }
+            } catch (err) {
+                console.error("Failed to delete slot:", err);
+                allBookings = prevBookings;
+                updateStats();
+                renderPendingList();
+                renderConfirmedList();
+                renderManageCalendar();
+                renderManageDaySlots(manageSelectedDateStr);
+                showToast("Could not remove slot. Please check your connection and try again.", "error");
+            }
+        });
+
+        // Decision Modal (Accept or Decline)
+        window.openDecisionModal = function(slotId, actionType = 'accept') {
+            const booking = allBookings.find(b => b.id === slotId);
+            if (!booking) return;
+
+            document.getElementById('decision-slot-id').value = booking.id;
+            document.getElementById('decision-action-type').value = actionType;
+            document.getElementById('decision-message').value = '';
+
+            const isAccept = actionType === 'accept';
+            const badge = document.getElementById('decision-action-badge');
+            const submitBtn = document.getElementById('decision-submit-btn');
+            const title = document.getElementById('decision-modal-title');
+            const reopenContainer = document.getElementById('decline-reopen-option');
+
+            if (isAccept) {
+                badge.textContent = 'Accept Request';
+                badge.className = 'text-xs font-bold uppercase tracking-wider text-emerald-600';
+                title.textContent = `Accept ${booking.parentName || 'Family'}'s Request`;
+                submitBtn.className = 'flex-1 py-2.5 rounded-xl text-white font-bold text-xs shadow-xs transition-all bg-emerald-600 hover:bg-emerald-700';
+                submitBtn.textContent = 'Confirm Booking & Notify';
+                reopenContainer.classList.add('hidden');
+            } else {
+                badge.textContent = 'Decline Request';
+                badge.className = 'text-xs font-bold uppercase tracking-wider text-rose-600';
+                title.textContent = `Decline ${booking.parentName || 'Family'}'s Request`;
+                submitBtn.className = 'flex-1 py-2.5 rounded-xl text-white font-bold text-xs shadow-xs transition-all bg-rose-600 hover:bg-rose-700';
+                submitBtn.textContent = 'Decline & Notify';
+                reopenContainer.classList.remove('hidden');
+            }
+
+            const reqEnd = getRequestedEndTime(booking);
+            document.getElementById('decision-summary').innerHTML = `
+                <div><strong>Family:</strong> ${booking.parentName || 'N/A'} (${booking.parentPhone || ''})</div>
+                <div><strong>Available Window:</strong> ${formatFriendlyDate(booking.date)} • ${booking.startTime} – ${booking.endTime}</div>
+                ${reqEnd ? `<div class="text-amber-900 font-bold bg-amber-100 p-1.5 rounded-lg mt-1 border border-amber-200">⏱️ Family Needed Until: ${reqEnd}</div>` : ''}
+                <div class="mt-1"><strong>Kids:</strong> ${booking.childrenInfo || 'N/A'}</div>
+            `;
+
+            document.getElementById('decision-modal').classList.remove('hidden');
+        };
+
+        window.closeDecisionModal = function() {
+            document.getElementById('decision-modal').classList.add('hidden');
+        };
+
+        document.getElementById('close-decision-btn').addEventListener('click', closeDecisionModal);
+
+        // Submit Decision
+        document.getElementById('decision-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const slotId = parseInt(document.getElementById('decision-slot-id').value, 10);
+            const actionType = document.getElementById('decision-action-type').value;
+            const message = document.getElementById('decision-message').value.trim();
+            const reopenSlot = document.getElementById('reopen-slot-checkbox').checked;
+
+            const existing = allBookings.find(b => b.id === slotId);
+            const isAccept = actionType === 'accept';
+
+            const submitBtn = document.getElementById('decision-submit-btn');
+            submitBtn.disabled = true;
+
+            try {
+                let payload = {};
+
+                if (isAccept) {
+                    payload = {
+                        booking: {
+                            status: 'accepted',
+                            elizabethNote: message
+                        }
+                    };
+                } else {
+                    if (reopenSlot) {
+                        payload = {
+                            booking: {
+                                status: 'available',
+                                parentName: '',
+                                parentPhone: '',
+                                parentEmail: '',
+                                childrenInfo: '',
+                                notes: '',
+                                elizabethNote: message
+                            }
+                        };
+                    } else {
+                        payload = {
+                            booking: {
+                                status: 'declined',
+                                elizabethNote: message
+                            }
+                        };
+                    }
+                }
+
+                // Update Sheety
+                const res = await fetch(`${BOOKING_CONFIG.API_URL}/${slotId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error(`PUT failed: ${res.status}`);
+
+                // Notify parent
+                if (existing) {
+                    await notifyParentOfDecision(existing, isAccept, message);
+                }
+
+                closeDecisionModal();
+                await loadDashboardData();
+                showToast(isAccept ? 'Booking accepted and family notified!' : 'Booking declined.');
+            } catch (err) {
+                console.error("Decision failed:", err);
+                showToast("Error updating booking. Please try again.", "error");
+            } finally {
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Tab Switching
+        const tabs = [
+            { btn: 'tab-btn-pending', section: 'tab-section-pending' },
+            { btn: 'tab-btn-availability', section: 'tab-section-availability' },
+            { btn: 'tab-btn-confirmed', section: 'tab-section-confirmed' }
+        ];
+
+        tabs.forEach(t => {
+            document.getElementById(t.btn).addEventListener('click', () => {
+                tabs.forEach(other => {
+                    const b = document.getElementById(other.btn);
+                    const s = document.getElementById(other.section);
+                    if (other.btn === t.btn) {
+                        b.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 bg-brand-primary text-white shadow-xs';
+                        s.classList.remove('hidden');
+                    } else {
+                        b.className = 'px-4 py-2 rounded-xl text-xs sm:text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-all flex items-center gap-2';
+                        s.classList.add('hidden');
+                    }
+                });
+            });
+        });
+
+        // Settings Modal
+        document.getElementById('settings-btn').addEventListener('click', () => {
+            document.getElementById('settings-phone').value = localStorage.getItem('elizabeth_phone') || BOOKING_CONFIG.ELIZABETH_PHONE || '';
+            document.getElementById('settings-appscript').value = localStorage.getItem('elizabeth_appscript_url') || BOOKING_CONFIG.APPS_SCRIPT_URL || '';
+            document.getElementById('settings-new-pin').value = '';
+            document.getElementById('settings-modal').classList.remove('hidden');
+        });
+
+        document.getElementById('close-settings-btn').addEventListener('click', () => {
+            document.getElementById('settings-modal').classList.add('hidden');
+        });
+
+        document.getElementById('settings-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const phone = document.getElementById('settings-phone').value.trim();
+            const appScriptUrl = document.getElementById('settings-appscript').value.trim();
+            const newPin = document.getElementById('settings-new-pin').value.trim();
+
+            if (phone) {
+                localStorage.setItem('elizabeth_phone', phone);
+                BOOKING_CONFIG.ELIZABETH_PHONE = phone;
+            }
+            if (appScriptUrl !== undefined) {
+                localStorage.setItem('elizabeth_appscript_url', appScriptUrl);
+                BOOKING_CONFIG.APPS_SCRIPT_URL = appScriptUrl;
+            }
+            if (newPin) {
+                setStoredPin(newPin);
+            }
+
+            document.getElementById('settings-modal').classList.add('hidden');
+            showToast('Settings saved successfully!');
+        });
+
+        // Navigation for manage calendar
+        document.getElementById('manage-prev-month').addEventListener('click', () => {
+            manageCurrentMonth.setMonth(manageCurrentMonth.getMonth() - 1);
+            renderManageCalendar();
+        });
+
+        document.getElementById('manage-next-month').addEventListener('click', () => {
+            manageCurrentMonth.setMonth(manageCurrentMonth.getMonth() + 1);
+            renderManageCalendar();
+        });
+
+        // Initialize on load
+        checkAuth();
+    </script>
+</body>
+</html>
