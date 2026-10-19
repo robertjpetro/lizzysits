@@ -15,7 +15,7 @@ const BOOKING_CONFIG = {
     SPECTRUM_SMS_GATEWAY: '@vtext.com',
 
     // Access PIN for /manage (can be updated here or in localStorage)
-    DEFAULT_PIN: '1234',
+    DEFAULT_PIN: '0347',
 
     // Google Apps Script Web App URL for free automated emails & Spectrum SMS
     // (Deploy as Web App in Google Sheets: Extensions > Apps Script)

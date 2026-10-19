@@ -33,7 +33,7 @@ lizzysits/
         ├── e-top.png        # Elizabeth avatar
         ├── 1.jpeg           # Storytime photo
         ├── 2.jpeg           # Playground photo
-        └── 3.jpeg           # Smoothies photo
+        └── 3.jpeg           # Dress-up photo
 ```
 
 ## Local Development
