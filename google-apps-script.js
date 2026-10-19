@@ -18,7 +18,7 @@
  *    - Click "Authorize access", choose your Google account (robertjpetro@gmail.com),
  *      click "Advanced", and click "Go to Untitled project (unsafe)" to grant permissions.
  * 7. Copy the "Web app URL" (looks like https://script.google.com/macros/s/AKfycb.../exec).
- * 8. Paste that URL into bookme/config.js as the value for APPS_SCRIPT_URL.
+ * 8. Paste that URL into config.js as the value for APPS_SCRIPT_URL.
  * 9. (Optional Test): Select "testSendAlert" from the function dropdown and click "Run".
  *    Elizabeth will immediately get an email and an SMS text (and you'll get a CC email)!
  * ============================================================================
@@ -44,7 +44,7 @@ const CONFIG = {
   SMS_GATEWAY: '@vtext.com',
 
   // Link to Elizabeth's management portal (Live site fallback)
-  MANAGE_URL: 'https://elizabethpetrovolleyball.com/bookme/manage'
+  MANAGE_URL: 'https://lizzysits.com/manage'
 };
 
 /**

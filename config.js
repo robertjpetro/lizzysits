@@ -24,7 +24,7 @@ const BOOKING_CONFIG = {
     // Web3Forms access key (fallback)
     WEB3FORMS_KEY: 'e5772b53-487b-4ea7-9099-23c2a05d8bc9',
 
-    SITE_URL: window.location.origin
+    SITE_URL: 'https://lizzysits.com'
 };
 
 // PIN management helper
@@ -59,7 +59,10 @@ function clearManagerSession() {
  * Send notification to Elizabeth via Google Apps Script (or Web3Forms fallback)
  */
 async function notifyElizabethOfBooking(booking) {
-    const manageUrl = `${window.location.origin}/manage?request=${booking.id || ''}`;
+    const baseUrl = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+        ? window.location.origin
+        : "https://lizzysits.com";
+    const manageUrl = `${baseUrl}/manage?request=${booking.id || ""}`;
     const appScriptUrl = BOOKING_CONFIG.APPS_SCRIPT_URL || localStorage.getItem('elizabeth_appscript_url');
 
     // 1. Google Apps Script Web App (Instant Email + Spectrum SMS text)
